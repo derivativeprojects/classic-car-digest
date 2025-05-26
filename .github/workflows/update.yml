@@ -2,7 +2,7 @@ name: Update Daily Classic Car Listings
 
 on:
   schedule:
-    - cron: '0 14 * * *'  # Runs every day at 6 AM PST
+    - cron: '0 14 * * *'  # Every day at 6 AM PST
   workflow_dispatch:
 
 jobs:
@@ -30,7 +30,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git pull --rebase
           git add index.html hemmings_raw.html
+          git pull --rebase
           git commit -m "Daily Hemmings update: $(date -u +'%Y-%m-%d')" || echo "No changes to commit"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
