@@ -11,9 +11,13 @@ headers = {
 response = requests.get(URL, headers=headers)
 soup = BeautifulSoup(response.text, "html.parser")
 
+# DEBUG STEP: Save the raw HTML for inspection
+with open("hemmings_raw.html", "w", encoding="utf-8") as f:
+    f.write(soup.prettify())
+
 cars = []
 
-# Hemmings listing cards (as of May 2025)
+# Attempt to select listing cards (may be incorrect – we’ll verify via saved HTML)
 cards = soup.select("ul.listings > li.listing")
 
 for card in cards[:10]:
