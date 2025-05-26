@@ -1,9 +1,9 @@
-name: Update Daily Classic Car Listings with Playwright
+name: Update Daily Classic Car Listings
 
 on:
   schedule:
-    - cron: '0 14 * * *'  # Runs every day at 6 AM PST
-  workflow_dispatch:       # Allows manual trigger from GitHub
+    - cron: '0 14 * * *'  # 6 AM PST
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,10 +20,9 @@ jobs:
 
       - name: 📦 Install required packages
         run: |
-          pip install playwright beautifulsoup4
-          playwright install chromium
+          pip install beautifulsoup4 requests
 
-      - name: 🏗️ Generate HTML with Playwright
+      - name: 🏗️ Generate HTML
         run: |
           python generate_html.py
 
@@ -32,5 +31,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "Automated daily update: $(date -u +'%Y-%m-%d %H:%M UTC')" || echo "No changes to commit"
+          git commit -m "Daily Hemmings update: $(date -u +'%Y-%m-%d')" || echo "No changes to commit"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
