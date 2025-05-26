@@ -8,8 +8,12 @@ def get_listings():
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
+        
+        # Go to the site and wait extra time for JavaScript to load
         page.goto(URL, timeout=60000)
-        page.wait_for_selector("div.vehicle-card", timeout=20000)
+        page.wait_for_timeout(10000)  # wait 10 seconds for JS to render
+        page.wait_for_selector("div.vehicle-card", timeout=40000)
+
         html = page.content()
         browser.close()
         return html
@@ -25,6 +29,7 @@ for listing in soup.select("div.vehicle-card")[:10]:
         location = listing.select_one("div.vehicle-location").text.strip()
         image = listing.select_one("img")["src"]
         link = "https://classiccars.com" + listing.select_one("a.vehicle-card-link")["href"]
+
         cars.append({
             "title": title,
             "price": price,
@@ -35,6 +40,7 @@ for listing in soup.select("div.vehicle-card")[:10]:
     except Exception:
         continue
 
+# Generate the HTML output
 today = datetime.now().strftime("%Y-%m-%d")
 html_out = f"""<!DOCTYPE html>
 <html><head>
