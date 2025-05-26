@@ -1,0 +1,33 @@
+name: Update Listings
+
+on:
+  schedule:
+    - cron: '0 14 * * *'  # Runs every day at 6 AM PST
+  workflow_dispatch:       # Allows manual run
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Generate HTML
+        run: |
+          pip install --upgrade pip
+          python generate_html.py
+
+      - name: Commit and push
+        run: |
+          git config user.name "carbot"
+          git config user.email "carbot@users.noreply.github.com"
+          git add index.html
+          git commit -m "Daily update $(date)"
+          git push
+Add GitHub Actions workflow to update index.html daily
