@@ -1,24 +1,30 @@
-import requests
-from bs4 import BeautifulSoup
 from datetime import datetime
+from playwright.sync_api import sync_playwright
+from bs4 import BeautifulSoup
 
 URL = "https://classiccars.com/listings/find/all-years/all-makes/all-models?sort=recently-listed"
-headers = {"User-Agent": "Mozilla/5.0"}
 
-response = requests.get(URL, headers=headers)
-soup = BeautifulSoup(response.text, "html.parser")
+def get_listings():
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(URL, timeout=60000)
+        page.wait_for_selector("div.vehicle-card", timeout=20000)
+        html = page.content()
+        browser.close()
+        return html
+
+html = get_listings()
+soup = BeautifulSoup(html, "html.parser")
 
 cars = []
-listings = soup.select("div.vehicle-card")
-
-for listing in listings:
+for listing in soup.select("div.vehicle-card")[:10]:
     try:
-        title = listing.select_one("h2.vehicle-title").get_text(strip=True)
-        price = listing.select_one("span.price").get_text(strip=True)
-        location = listing.select_one("div.vehicle-location").get_text(strip=True)
+        title = listing.select_one("h2.vehicle-title").text.strip()
+        price = listing.select_one("span.price").text.strip()
+        location = listing.select_one("div.vehicle-location").text.strip()
         image = listing.select_one("img")["src"]
         link = "https://classiccars.com" + listing.select_one("a.vehicle-card-link")["href"]
-
         cars.append({
             "title": title,
             "price": price,
@@ -26,15 +32,11 @@ for listing in listings:
             "image": image,
             "link": link
         })
-
-        if len(cars) == 10:
-            break
     except Exception:
         continue
 
-# Generate HTML
 today = datetime.now().strftime("%Y-%m-%d")
-html = f"""<!DOCTYPE html>
+html_out = f"""<!DOCTYPE html>
 <html><head>
   <title>Classic Car Listings - {today}</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -49,7 +51,7 @@ html = f"""<!DOCTYPE html>
 """
 
 for car in cars:
-    html += f"""
+    html_out += f"""
     <div class="car">
       <img src="{car['image']}" alt="{car['title']}">
       <h2>{car['title']}</h2>
@@ -59,7 +61,7 @@ for car in cars:
     </div>
     """
 
-html += "</body></html>"
+html_out += "</body></html>"
 
 with open("index.html", "w", encoding="utf-8") as f:
-    f.write(html)
+    f.write(html_out)
