@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 
-URL = "https://www.hemmings.com/classifieds"
+URL = "https://www.hemmings.com/classifieds/cars-for-sale"
 
 headers = {
     "User-Agent": "Mozilla/5.0"
@@ -13,14 +13,16 @@ soup = BeautifulSoup(response.text, "html.parser")
 
 cars = []
 
-for card in soup.select("div.classified-listing")[:10]:
+# Hemmings listing cards (as of May 2025)
+cards = soup.select("ul.listings > li.listing")
+
+for card in cards[:10]:
     try:
-        title = card.select_one("h3.title").get_text(strip=True)
-        price = card.select_one("div.price").get_text(strip=True)
-        location = card.select_one("div.location").get_text(strip=True)
+        title = card.select_one("div.listing-title").get_text(strip=True)
+        price = card.select_one("div.listing-price").get_text(strip=True)
+        location = card.select_one("div.listing-location").get_text(strip=True)
         link = "https://www.hemmings.com" + card.select_one("a")["href"]
-        image_tag = card.select_one("img")
-        image = image_tag["src"] if image_tag and "src" in image_tag.attrs else "https://via.placeholder.com/600x300"
+        image = card.select_one("img")["src"]
 
         cars.append({
             "title": title,
