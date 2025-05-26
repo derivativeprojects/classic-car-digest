@@ -1,55 +1,50 @@
-import requests
-from bs4 import BeautifulSoup
 from datetime import datetime
+from playwright.sync_api import sync_playwright
+from bs4 import BeautifulSoup
 
 URL = "https://www.hemmings.com/classifieds/cars-for-sale?sort=latest"
 
-headers = {
-    "User-Agent": "Mozilla/5.0"
-}
+def get_listings():
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        page = browser.new_page()
+        page.goto(URL, timeout=60000)
+        page.wait_for_timeout(8000)  # wait for JS-rendered listings to load
+        html = page.content()
+        browser.close()
+        return html
 
-response = requests.get(URL, headers=headers)
-soup = BeautifulSoup(response.text, "html.parser")
-
-# Save for debugging
-with open("hemmings_raw.html", "w", encoding="utf-8") as f:
-    f.write(soup.prettify())
+html = get_listings()
+soup = BeautifulSoup(html, "html.parser")
 
 cars = []
 
-# Each car listing is inside an <article> tag with a link and image
-for article in soup.select("article"):
+for card in soup.select("a[href^='/classifieds/cars-for-sale/']"):
     try:
-        link_tag = article.select_one("a[href*='/classifieds/cars-for-sale/']")
-        if not link_tag:
-            continue
-
-        link = "https://www.hemmings.com" + link_tag["href"]
-        title = link_tag.get_text(strip=True)
-
-        image_tag = article.select_one("img")
+        title = card.get_text(strip=True)
+        link = "https://www.hemmings.com" + card["href"]
+        image_tag = card.select_one("img")
         image = image_tag["src"] if image_tag and "src" in image_tag.attrs else ""
-
-        price_tag = article.select_one("div.pricing, .listing-price")
+        price_tag = card.find_next("div", class_="pricing")
         price = price_tag.get_text(strip=True) if price_tag else "Price not listed"
 
-        cars.append({
-            "title": title,
-            "price": price,
-            "location": "—",  # Hemmings doesn't consistently display location in search
-            "image": image,
-            "link": link
-        })
+        if title and image:
+            cars.append({
+                "title": title,
+                "price": price,
+                "location": "—",
+                "image": image,
+                "link": link
+            })
 
-        if len(cars) == 10:
+        if len(cars) >= 10:
             break
-
     except Exception:
         continue
 
-# Generate HTML
+# Generate the HTML page
 today = datetime.now().strftime("%Y-%m-%d")
-html = f"""<!DOCTYPE html>
+html_out = f"""<!DOCTYPE html>
 <html>
 <head>
   <title>Classic Car Listings - {today}</title>
@@ -66,7 +61,7 @@ html = f"""<!DOCTYPE html>
 """
 
 for car in cars:
-    html += f"""
+    html_out += f"""
     <div class="car">
       <img src="{car['image']}" alt="{car['title']}">
       <h2>{car['title']}</h2>
@@ -76,7 +71,7 @@ for car in cars:
     </div>
     """
 
-html += "</body></html>"
+html_out += "</body></html>"
 
 with open("index.html", "w", encoding="utf-8") as f:
-    f.write(html)
+    f.write(html_out)
