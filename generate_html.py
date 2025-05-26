@@ -1,32 +1,30 @@
+import requests
+from bs4 import BeautifulSoup
 from datetime import datetime
 
-today = datetime.now().strftime("%Y-%m-%d")
-html = f"""
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Classic Car Listings - {today}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body {{ font-family: sans-serif; padding: 2rem; background: #f4f4f4; }}
-    .car {{ background: white; margin: 1rem 0; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
-    img {{ max-width: 100%; border-radius: 6px; }}
-    h2 {{ margin: 0.5rem 0; }}
-  </style>
-</head>
-<body>
-  <h1>Classic Cars for Sale – {today}</h1>
+# URL of ClassicCars search results
+URL = "https://classiccars.com/listings/find/all-years/all-makes/all-models?sort=recently-listed"
 
-  <div class="car">
-    <img src="https://via.placeholder.com/600x300?text=1969+Camaro+SS" alt="1969 Camaro SS">
-    <h2>1969 Camaro SS</h2>
-    <p><strong>Price:</strong> $49,000<br>
-    <strong>Location:</strong> Detroit, MI<br>
-    <a href="#">View listing</a></p>
-  </div>
-</body>
-</html>
-"""
+# Make the request
+headers = {"User-Agent": "Mozilla/5.0"}
+response = requests.get(URL, headers=headers)
+soup = BeautifulSoup(response.text, "html.parser")
 
-with open("index.html", "w") as f:
-    f.write(html)
+# Parse the top 10 listings
+cars = []
+for listing in soup.select("div.vehicle-card")[:10]:
+    title = listing.select_one("h2.vehicle-title").text.strip()
+    price = listing.select_one("span.price").text.strip()
+    location = listing.select_one("div.vehicle-location").text.strip()
+    image = listing.select_one("img")["src"]
+    link = "https://classiccars.com" + listing.select_one("a.vehicle-card-link")["href"]
+    
+    cars.append({
+        "title": title,
+        "price": price,
+        "location": location,
+        "image": image,
+        "link": link
+    })
+
+#
