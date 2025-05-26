@@ -33,3 +33,4 @@ jobs:
           git add index.html hemmings_raw.html
           git commit -m "Daily Hemmings update: $(date -u +'%Y-%m-%d')" || echo "No changes to commit"
           git push -f https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+
