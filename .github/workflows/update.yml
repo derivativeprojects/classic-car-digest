@@ -1,9 +1,9 @@
-name: Update Daily Classic Car Listings
+name: Update Daily Classic Car Listings with Playwright
 
 on:
   schedule:
-    - cron: '0 14 * * *'  # Runs daily at 6 AM PST / 9 AM EST
-  workflow_dispatch:       # Allows manual run from GitHub
+    - cron: '0 14 * * *'  # Runs every day at 6 AM PST
+  workflow_dispatch:       # Allows manual trigger from GitHub
 
 jobs:
   build:
@@ -19,12 +19,11 @@ jobs:
           python-version: '3.11'
 
       - name: 📦 Install required packages
-  run: |
-    pip install playwright beautifulsoup4
-    playwright install chromium
+        run: |
+          pip install playwright beautifulsoup4
+          playwright install chromium
 
-
-      - name: 🏗️ Generate HTML
+      - name: 🏗️ Generate HTML with Playwright
         run: |
           python generate_html.py
 
