@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 
-URL = "https://www.hemmings.com/classifieds/cars-for-sale"
+URL = "https://www.hemmings.com/classifieds/cars-for-sale?sort=latest"
 
 headers = {
     "User-Agent": "Mozilla/5.0"
@@ -11,30 +11,39 @@ headers = {
 response = requests.get(URL, headers=headers)
 soup = BeautifulSoup(response.text, "html.parser")
 
-# DEBUG STEP: Save the raw HTML for inspection
+# Save for debugging
 with open("hemmings_raw.html", "w", encoding="utf-8") as f:
     f.write(soup.prettify())
 
 cars = []
 
-# Attempt to select listing cards (may be incorrect – we’ll verify via saved HTML)
-cards = soup.select("ul.listings > li.listing")
-
-for card in cards[:10]:
+# Each car listing is inside an <article> tag with a link and image
+for article in soup.select("article"):
     try:
-        title = card.select_one("div.listing-title").get_text(strip=True)
-        price = card.select_one("div.listing-price").get_text(strip=True)
-        location = card.select_one("div.listing-location").get_text(strip=True)
-        link = "https://www.hemmings.com" + card.select_one("a")["href"]
-        image = card.select_one("img")["src"]
+        link_tag = article.select_one("a[href*='/classifieds/cars-for-sale/']")
+        if not link_tag:
+            continue
+
+        link = "https://www.hemmings.com" + link_tag["href"]
+        title = link_tag.get_text(strip=True)
+
+        image_tag = article.select_one("img")
+        image = image_tag["src"] if image_tag and "src" in image_tag.attrs else ""
+
+        price_tag = article.select_one("div.pricing, .listing-price")
+        price = price_tag.get_text(strip=True) if price_tag else "Price not listed"
 
         cars.append({
             "title": title,
             "price": price,
-            "location": location,
+            "location": "—",  # Hemmings doesn't consistently display location in search
             "image": image,
             "link": link
         })
+
+        if len(cars) == 10:
+            break
+
     except Exception:
         continue
 
