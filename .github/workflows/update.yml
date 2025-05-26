@@ -2,8 +2,8 @@ name: Update Daily Classic Car Listings
 
 on:
   schedule:
-    - cron: '0 14 * * *'  # Runs every day at 6 AM PST (14:00 UTC)
-  workflow_dispatch:       # Allows you to trigger manually from GitHub
+    - cron: '0 14 * * *'  # Runs daily at 6 AM PST / 9 AM EST
+  workflow_dispatch:       # Allows manual run from GitHub
 
 jobs:
   build:
@@ -27,9 +27,9 @@ jobs:
           python generate_html.py
 
       - name: 💾 Commit and push changes
-  run: |
-    git config user.name "github-actions[bot]"
-    git config user.email "github-actions[bot]@users.noreply.github.com"
-    git add index.html
-    git commit -m "Automated daily update: $(date -u +'%Y-%m-%d %H:%M UTC')" || echo "No changes to commit"
-    git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Automated daily update: $(date -u +'%Y-%m-%d %H:%M UTC')" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:main
