@@ -30,7 +30,7 @@ for listing in listings:
         if len(cars) == 10:
             break
     except Exception:
-        continue  # skip broken cards
+        continue
 
 # Generate HTML
 today = datetime.now().strftime("%Y-%m-%d")
